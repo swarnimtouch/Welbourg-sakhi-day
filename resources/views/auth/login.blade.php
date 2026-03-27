@@ -7,40 +7,82 @@
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Changed font to Nunito to match index.blade.php -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 
     <style>
+        :root {
+            /* Brand Colors Extracted from index.blade.php */
+            --theme-navy: #1D507B;
+            --theme-teal: #03B8A5;
+            --theme-navy-hover: #143b5c;
+            --theme-teal-hover: #029485;
+            --bg-color: #f4f8fb;
+            --text-dark: #1a202c;
+            --text-muted: #4a5568;
+            --error-red: #e53e3e;
+        }
+
         body {
-            font-family: 'Poppins', sans-serif;
-            background: radial-gradient(circle at center, #dcedfb 0%, #b3d7f6 100%);
+            font-family: 'Nunito', sans-serif;
+            /* Premium light gradient background */
+            background: linear-gradient(135deg, #d6e1f3 0%, #bbd3ec 50%, #ade9d9 100%);
+            background-size: 200% 200%;
+            animation: gradientBG 12s ease infinite;
+            min-height: 100vh;
+            color: var(--text-dark);
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .login-card {
-            border-radius: 12px;
+            background: #fff;
+            border-radius: 24px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-            border: 1.5px solid #204e8a;
+            border: none;
+            border-top: 5px solid var(--theme-teal);
             max-width: 420px;
             width: 100%;
+            animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .card-header {
+            border-bottom: none !important;
         }
 
         .logo {
-            max-width: 150px;
-            height: auto;
+            max-height: 60px; /* Adjusted to match form_logo proportions */
+            width: auto;
+            object-fit: contain;
         }
 
         .login-title {
-            color: #204e8a;
-            font-size: 18px;
-            font-weight: 700;
-            letter-spacing: 1px;
+            color: var(--theme-navy);
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+            margin-top: 10px !important;
         }
 
         .form-label {
-            color: #204e8a;
-            font-size: 14px;
-            font-weight: 600;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--theme-navy);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .icon-input-wrapper {
@@ -49,19 +91,20 @@
 
         .icon-input-wrapper .left-icon {
             position: absolute;
-            left: 15px;
+            left: 16px;
             top: 50%;
             transform: translateY(-50%);
-            color: #204e8a;
+            color: var(--theme-navy);
             font-size: 14px;
+            z-index: 5;
         }
 
         .icon-input-wrapper .toggle-password {
             position: absolute;
-            right: 15px;
+            right: 16px;
             top: 50%;
             transform: translateY(-50%);
-            color: #204e8a;
+            color: var(--theme-navy);
             font-size: 14px;
             cursor: pointer;
             z-index: 5;
@@ -69,72 +112,90 @@
         }
 
         .icon-input-wrapper .toggle-password:hover {
-            color: #3461a3;
+            color: var(--theme-teal);
         }
 
         .icon-input-wrapper .form-control {
-            padding-left: 45px;
-            font-size: 14px;
-            border-color: #cbd5e1;
+            padding: 12px 16px 12px 45px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 15px;
+            color: var(--text-dark);
+            background: #fafafa;
+            transition: all 0.2s;
+            height: auto;
         }
 
         .icon-input-wrapper #password {
-            padding-right: 40px;
+            padding-right: 45px;
         }
 
         .icon-input-wrapper .form-control:focus {
-            border-color: #204e8a;
-            box-shadow: 0 0 0 0.2rem rgba(32, 78, 138, 0.25);
+            border-color: var(--theme-teal);
+            box-shadow: 0 0 0 3px rgba(3, 184, 165, 0.15);
+            background: #fff;
+            outline: none;
         }
 
         .remember-label {
-            font-size: 13px;
-            color: #204e8a;
-            font-weight: 500;
+            font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 600;
             cursor: pointer;
             margin-bottom: 0;
             margin-left: 8px;
+            user-select: none;
         }
 
+        /* Submit Button with matching gradient and animation */
         .btn-submit {
-            background-color: #3461a3;
-            color: #ffffff;
-            font-weight: 600;
+            padding: 14px;
+            background: linear-gradient(90deg, var(--theme-navy), var(--theme-teal));
+            background-size: 200% auto;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 800;
+            transition: all 0.4s ease;
             letter-spacing: 0.5px;
-            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(3, 184, 165, 0.3);
         }
 
         .btn-submit:hover {
-            background-color: #204e8a;
-            color: #ffffff;
+            background-position: right center;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(3, 184, 165, 0.4);
         }
 
+        /* Error States matching index.blade.php */
         label.error {
-            color: #dc3545;
+            color: var(--error-red);
             font-size: 12px;
-            margin-top: 4px;
+            margin-top: 6px;
+            font-weight: 600;
             display: block;
-            font-weight: 500;
         }
 
         .form-control.error {
-            border-color: #dc3545;
+            border-color: var(--error-red) !important;
+            background: #fff5f5 !important;
         }
     </style>
 </head>
 <body class="d-flex justify-content-center align-items-center vh-100 m-0 px-3">
 
-    <div class="card login-card bg-white">
-
-        <div class="card-header bg-transparent border-bottom px-4 pt-4 pb-3 text-center">
-            <img src="{{ asset('images/logo.png') }}" alt="Zonalta Logo" class="logo mb-3" onerror="this.style.display='none'">
-            <h2 class="login-title m-0">ADMIN LOGIN</h2>
+    <div class="card login-card">
+        <div class="card-header bg-transparent px-4 pt-4 pb-0 text-center">
+            <img src="{{ asset('images/logo.png') }}" alt="Zonalta Logo" class="logo mb-2" onerror="this.style.display='none'">
+            <h2 class="login-title">ADMIN LOGIN</h2>
         </div>
 
         <div class="card-body p-4">
 
             @if(session('error') || $errors->any())
-                <div class="alert alert-danger py-2 px-3 text-center" style="font-size: 14px;" role="alert">
+                <div class="alert alert-danger py-2 px-3 text-center" style="font-size: 14px; border-radius: 10px; font-weight: 600;" role="alert">
                     {{ session('error') ?? $errors->first() }}
                 </div>
             @endif
@@ -142,29 +203,29 @@
             <form id="adminLoginForm" method="POST" action="{{ route('admin.login.submit') }}" novalidate>
                 @csrf
 
-                <div class="mb-3">
+                <div class="mb-4">
                     <label class="form-label" for="email">Email Address</label>
                     <div class="icon-input-wrapper">
                         <i class="fa-solid fa-envelope left-icon"></i>
-                        <input type="email" name="email" id="email" class="form-control py-2" placeholder="Enter Email Address" value="{{ old('email') }}">
+                        <input type="email" name="email" id="email" class="form-control" placeholder="Enter Email Address" value="{{ old('email') }}">
                     </div>
                 </div>
 
-                <div class="mb-3">
+                <div class="mb-4">
                     <label class="form-label" for="password">Password</label>
                     <div class="icon-input-wrapper">
                         <i class="fa-solid fa-lock left-icon"></i>
-                        <input type="password" name="password" id="password" class="form-control py-2" placeholder="Enter Password">
+                        <input type="password" name="password" id="password" class="form-control" placeholder="Enter Password">
                         <i class="fa-solid fa-eye-slash toggle-password" title="Show/Hide Password"></i>
                     </div>
                 </div>
 
                 <div class="mb-4 d-flex align-items-center">
-                    <input type="checkbox" name="remember" id="remember" style="accent-color: #204e8a; cursor: pointer;">
+                    <input type="checkbox" name="remember" id="remember" style="accent-color: var(--theme-teal); width: 16px; height: 16px; cursor: pointer;">
                     <label class="remember-label" for="remember">Remember me</label>
                 </div>
 
-                <button type="submit" class="btn btn-submit w-100 py-2">Log in</button>
+                <button type="submit" class="btn btn-submit w-100">Log in</button>
             </form>
         </div>
     </div>
@@ -187,6 +248,14 @@
             });
 
             $("#adminLoginForm").validate({
+                errorElement: 'label',
+                errorClass: 'error',
+                highlight: function(element) {
+                    $(element).addClass('error');
+                },
+                unhighlight: function(element) {
+                    $(element).removeClass('error');
+                },
                 rules: {
                     email: {
                         required: true,
@@ -199,16 +268,20 @@
                 },
                 messages: {
                     email: {
-                        required: "Please enter your email address",
-                        email: "Please enter a valid email"
+                        required: "Please enter your email address.",
+                        email: "Please enter a valid email."
                     },
                     password: {
-                        required: "Please enter your password",
-                        minlength: "Password must be at least 6 characters"
+                        required: "Please enter your password.",
+                        minlength: "Password must be at least 6 characters."
                     }
                 },
                 errorPlacement: function(error, element) {
                     error.insertAfter(element.parent(".icon-input-wrapper"));
+                },
+                submitHandler: function(form) {
+                    $('.btn-submit').prop('disabled', true).text('Logging in...');
+                    form.submit();
                 }
             });
         });
