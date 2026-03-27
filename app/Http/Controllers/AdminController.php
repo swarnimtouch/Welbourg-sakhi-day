@@ -15,7 +15,7 @@ class AdminController extends Controller
     public function showLoginForm()
     {
         if (Auth::check()) {
-            return redirect()->route('admin.doctors.index');
+            return redirect()->route('admin.doctor.index');
         }
 
         return view('auth.login');
