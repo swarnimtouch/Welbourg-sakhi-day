@@ -85,7 +85,7 @@
 
                         <td>
                             <div class="doc-name-cell">
-                                <span class="doc-name-text">{{ $doctor->doctor_name }}</span>
+                                <span class="doc-name-text">{{$doctor->doctor_prefix.''. $doctor->doctor_name }}</span>
                             </div>
                         </td>
                         <td><span class="badge-mono">{{ $doctor->doctor_qualification ?? '—' }}</span></td>
@@ -202,7 +202,7 @@
                         <div class="m-card-av {{ $c }}">{{ strtoupper(substr($doctor->doctor_name, 0, 1)) }}</div>
                     @endif
                     <div class="m-card-title">
-                        <div class="m-card-name">{{ $doctor->doctor_name }}</div>
+                        <div class="m-card-name">{{ $doctor->doctor_prefix.''.$doctor->doctor_name }}</div>
                         <div class="m-card-sub">{{ $doctor->doctor_hospital ?? '' }}</div>
                     </div>
                     <span class="m-card-serial-badge">#{{ $doctors->firstItem() + $index }}</span>

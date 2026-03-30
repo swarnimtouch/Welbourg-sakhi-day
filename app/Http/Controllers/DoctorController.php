@@ -24,6 +24,7 @@ class DoctorController extends Controller
             'doctor_qualification' => 'required',
             'doctor_phone'         => 'required|digits:10',
             'cropped_image'        => 'required',
+            'doctor_prefix' => 'nullable',
         ]);
 
         $data = $request->all();
@@ -63,9 +64,9 @@ class DoctorController extends Controller
             $banner = imagecreatefromjpeg($bgPath);
 
             // 🎯 SETTINGS
-            $size  = 502;
-            $destX = 291;
-            $destY = 174;
+            $size  = 814;
+            $destX = 213;
+            $destY = 752;
 
             // Resize
             $resized = imagecreatetruecolor($size, $size);
@@ -87,7 +88,116 @@ class DoctorController extends Controller
 
             // Merge on banner
             imagecopy($banner, $resized, $destX, $destY, 0, 0, $size, $size);
+            // ── TEXT SETTINGS ──
+            // Font path
+            // Fonts
+            $fontBold    = public_path('fonts/RobotoCondensed-Bold.ttf');
+            $fontRegular = public_path('fonts/RobotoCondensed-Regular.ttf');
 
+            // Colors
+            $blueColor = imagecolorallocate($banner, 21, 73, 109);
+
+            // Gradient colors (RED → ORANGE)
+            $startColor = [237, 28, 36];
+            $endColor   = [255, 127, 39];
+
+            // Data
+            $prefix = $data['doctor_prefix'] ?? '';
+            $name   = trim($prefix . ' ' . $data['doctor_name']);
+            $qual  = trim($data['doctor_qualification']);
+            $phone = $data['doctor_phone'];
+
+            // Width limit
+            $startX = 1235;
+            $endX   = 2480;
+            $maxWidth = $endX - $startX;
+
+
+            // =======================
+            // 🎯 AUTO FIT FUNCTION
+            // =======================
+            function fitTextSize($text, $font, $maxWidth, $startSize) {
+                $size = $startSize;
+
+                while ($size > 20) {
+                    $box = imagettfbbox($size, 0, $font, $text);
+                    $width = $box[2] - $box[0];
+
+                    if ($width <= $maxWidth) {
+                        return $size;
+                    }
+                    $size--;
+                }
+
+                return $size;
+            }
+
+
+            // =======================
+            // 🎯 NAME (GRADIENT + AUTO FIT)
+            // =======================
+            // =======================
+            // 🎯 NAME (THODA NICHE + BALANCED SIZE)
+            // =======================
+            $nameSize = fitTextSize($name, $fontBold, $maxWidth, 75); // 👈 thoda kam
+
+            $x = $startX;
+            $y = 1360; // 👈 NICHE LAAYA (important fix)
+
+            $letters = str_split($name);
+            $total   = count($letters);
+
+            foreach ($letters as $i => $char) {
+
+                $r = $startColor[0] + ($endColor[0] - $startColor[0]) * ($i / $total);
+                $g = $startColor[1] + ($endColor[1] - $startColor[1]) * ($i / $total);
+                $b = $startColor[2] + ($endColor[2] - $startColor[2]) * ($i / $total);
+
+                $color = imagecolorallocate($banner, $r, $g, $b);
+
+                imagettftext($banner, $nameSize, 0, $x, $y, $color, $fontBold, $char);
+
+                $bbox = imagettfbbox($nameSize, 0, $fontBold, $char);
+                $charWidth = $bbox[2] - $bbox[0];
+
+                $x += $charWidth + 1; // 👈 spacing thoda kam (clean look)
+            }
+
+
+// =======================
+// 🎯 QUALIFICATION (SIZE KAM + PROPER GAP)
+// =======================
+            $qualSize = fitTextSize($qual, $fontRegular, $maxWidth, 40); // 👈 kam kiya
+
+            imagettftext(
+                $banner,
+                $qualSize,
+                0,
+                $startX,
+                1440, // 👈 name ke niche perfect gap
+                $blueColor,
+                $fontRegular,
+                $qual
+            );
+
+
+// =======================
+// 🎯 PHONE (THODA BADA)
+// =======================
+            $phoneText = $phone;
+
+            $phoneSize = fitTextSize($phoneText, $fontBold, $maxWidth, 70); // 👈 bada
+
+            imagettftext(
+                $banner,
+                $phoneSize,
+                0,
+                $startX,
+                1650,
+                $blueColor,
+                $fontBold,
+                $phoneText
+            );
             // ── Convert Banner to String (IMPORTANT 🔥) ──
             ob_start();
             imagepng($banner, null, 0);
@@ -109,12 +219,12 @@ class DoctorController extends Controller
             $imageName = $baseFolder . '/photos/' . $imageName;
             $finalName = $baseFolder . '/banners/' . $bannerName;
         }
-
         // ✅ Save DB
         Doctor::create([
             'employee_name'        => $data['employee_name'],
             'employee_code'        => $data['employee_code'] ?? null,
             'employee_hq'          => $data['employee_hq'],
+            'doctor_prefix'        => $data['doctor_prefix'], // 👈 ADD THIS
             'doctor_name'          => $data['doctor_name'],
             'doctor_qualification' => $data['doctor_qualification'],
             'doctor_phone'         => $data['doctor_phone'],

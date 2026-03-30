@@ -9,10 +9,10 @@
 
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
+
     <!-- Croppie CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.5/croppie.min.css"/>
-    
+
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 
@@ -98,7 +98,7 @@
             align-items: center;
             gap: 10px;
         }
-        
+
         /* Form Labels & Inputs */
         label {
             font-size: 13px;
@@ -123,7 +123,7 @@
             box-shadow: 0 0 0 3px rgba(3, 184, 165, 0.15);
             background: #fff;
         }
-        
+
         /* Error States */
         .input-error { border-color: var(--error-red) !important; background: #fff5f5 !important; }
         div.error {
@@ -168,7 +168,7 @@
             width: 100%;
             height: 100%;
         }
-        
+
         .upload-icon {
             color: var(--theme-teal);
             transition: transform 0.3s;
@@ -188,7 +188,7 @@
             text-align: center;
             animation: fadeIn 0.4s ease;
         }
-        
+
         #crop-preview-img {
             width: 130px;
             height: 130px;
@@ -209,7 +209,7 @@
             border-radius: 8px;
             transition: all 0.2s;
         }
-        
+
         .btn-recrop {
             background: rgba(3, 184, 165, 0.1);
             color: var(--theme-teal-hover);
@@ -246,9 +246,9 @@
             letter-spacing: 0.5px;
             box-shadow: 0 4px 15px rgba(3, 184, 165, 0.3);
         }
-        .btn-submit:hover { 
-            background-position: right center; 
-            color: white; 
+        .btn-submit:hover {
+            background-position: right center;
+            color: white;
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(3, 184, 165, 0.4);
         }
@@ -292,9 +292,9 @@
             /* background: #000; Ye yaha se nikal denge, croppie khud black space lega */
             border-radius: 8px;
             /* Extra space bottom me add kiya slider ke liye (white area me) */
-            padding-bottom: 30px; 
+            padding-bottom: 30px;
             /* Relative zaruri hai taki andar ka absolute slider iske bahar nikal sake */
-            position: relative; 
+            position: relative;
         }
 
         /* NAYA CSS ADD KARE: Zoom Slider ko black box ke bahar nikalne ke liye */
@@ -320,7 +320,7 @@
         }
 
         /* --- NAYE ANIMATIONS YAHAN SE ADD KAREIN --- */
-        
+
         /* Background gradient move karne ke liye */
         @keyframes gradientBG {
             0% { background-position: 0% 50%; }
@@ -344,14 +344,14 @@
         /* Responsive */
         /* Responsive */
         @media (max-width: 1025px) {
-            body { 
-                display: block; 
+            body {
+                display: block;
                 padding-top: 30px; /* Body ki top padding adjust ki */
             }
-            .page-logo { 
+            .page-logo {
                 position: relative; /* Absolute hata diya taki form ke upar overlap na ho */
-                top: 0; 
-                left: 0; 
+                top: 0;
+                left: 0;
                 transform: none; /* Purana translate reset kiya */
                 text-align: center; /* Logo ko horizontally center karne ke liye */
                 margin-bottom: 25px; /* Logo aur form ke beech ki space */
@@ -360,8 +360,8 @@
             .page-logo img {
                 max-height: 85px; /* Choti screen par size thoda adjust kiya taki ajeeb na lage */
             }
-            .custom-card { 
-                padding: 30px 20px; 
+            .custom-card {
+                padding: 30px 20px;
             }
         }
     </style>
@@ -413,6 +413,13 @@
             </div>
 
             <hr class="divider">
+            <div class="mb-3 position-relative">
+                <label>Prefix <span style="color:var(--error-red)">*</span></label>
+                <select name="doctor_prefix" class="form-control">
+                    <option value="">Select Prefix</option>
+                    <option value="Dr." selected>Dr.</option>
+                </select>
+            </div>
 
             <div class="mb-3 position-relative">
                 <label>Doctor Name <span style="color:var(--error-red)">*</span></label>
@@ -465,7 +472,7 @@
                 </div>
             </div>
 
-            
+
             <input type="hidden" name="cropped_image" id="cropped_image">
 
             <button type="submit" class="btn btn-submit w-100 mt-2" id="submitBtn">Submit &amp; Generate Banner</button>
@@ -545,7 +552,7 @@
                     showZoomer: true // ✅ Ye explicitly zoom slider line ko UI me display karega
                 });
             }
-            
+
             // Bind image and apply saved state if re-cropping
             croppieInstance.croppie('bind', {
                 url: originalImageSrc,
@@ -580,15 +587,15 @@
                 // Set form data & preview
                 $('#cropped_image').val(img);
                 $('#crop-preview-img').attr('src', img);
-                
+
                 // Toggle UI
                 $('#uploadArea').hide();
                 $('#previewArea').fadeIn();
-                
+
                 // Clear Errors
                 $('#err_cropped_image').hide();
                 $('#uploadArea').removeClass('area-error');
-                
+
                 cropModal.hide();
             });
         });
@@ -606,8 +613,8 @@
             savedCropData = null;
             $('#cropped_image').val('');
             $('#crop-preview-img').attr('src', '');
-            $('#upload').val(''); 
-            
+            $('#upload').val('');
+
             $('#previewArea').hide();
             $('#uploadArea').fadeIn();
         });
@@ -622,7 +629,7 @@
             errorClass: 'error',
             highlight: function(element) {
                 $(element).addClass('input-error');
-                
+
                 // 🔴 NAYA: Agar error photo (cropped_image) me hai, toh upload box ka border red karo
                 if (element.name === "cropped_image") {
                     $('#uploadArea').addClass('area-error');
@@ -630,7 +637,7 @@
             },
             unhighlight: function(element) {
                 $(element).removeClass('input-error');
-                
+
                 // 🔴 NAYA: Jab photo upload ho jaye, toh red border nikal do
                 if (element.name === "cropped_image") {
                     $('#uploadArea').removeClass('area-error');
@@ -642,7 +649,7 @@
                     error.insertAfter("#uploadArea");
                 } else {
                     // Baki sab inputs ke liye default jagah par error dikhayega
-                    error.insertAfter(element); 
+                    error.insertAfter(element);
                 }
             },
             rules: {
@@ -728,7 +735,7 @@
             var pasted = (e.originalEvent.clipboardData || window.clipboardData).getData('text');
             var digits = pasted.replace(/[^0-9]/g, '').slice(0, 10);
             this.value = digits;
-            $(this).valid(); 
+            $(this).valid();
         });
 
         $('#doctor_phone').on('input', function () {
