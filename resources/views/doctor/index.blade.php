@@ -42,7 +42,7 @@
             animation: gradientBG 12s ease infinite; /* Soft moving background */
             min-height: 100vh;
             position: relative;
-            padding: 40px 16px;
+            padding: 15px 16px;
         }
 
         /* Top Left Main Logo */
@@ -61,8 +61,8 @@
             background: #fff; /* Pure white on light background */
             border-radius: 24px;
             /* Normal soft dark shadow for light background */
+            padding: 25px 32px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-            padding: 40px 32px;
             border-top: 5px solid var(--theme-teal);
             animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); /* Entrance animation */
         }
@@ -70,15 +70,15 @@
         /* Form Header */
         .form-header {
             text-align: center;
-            margin-bottom: 28px;
+            margin-bottom: 15px; /* NAYA: 28px se 15px kiya */
         }
         .form-header img {
-            max-height: 50px;
-            margin-bottom: 12px;
+            max-height: 40px; /* NAYA: 50px se 40px kiya */
+            margin-bottom: 8px; /* NAYA: 12px se 8px kiya */
             object-fit: contain;
         }
         .form-header h2 {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: 800;
             color: var(--theme-navy);
             letter-spacing: -0.3px;
@@ -101,16 +101,16 @@
 
         /* Form Labels & Inputs */
         label {
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 700;
             color: var(--theme-navy);
-            margin-bottom: 8px;
+            margin-bottom: 4px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
         .form-control {
-            padding: 12px 16px;
+            padding: 8px 12px;
             border: 1.5px solid #e2e8f0;
             border-radius: 10px;
             font-size: 15px;
@@ -133,7 +133,7 @@
             font-weight: 600;
         }
 
-        .divider { border-top: 1.5px solid #e2e8f0; margin: 24px 0; opacity: 1; }
+        .divider { border-top: 1.5px solid #e2e8f0; margin: 12px 0; opacity: 1; }
 
         /* --------------------------------------
            UPLOAD & PREVIEW AREA (REACT STYLE)
@@ -150,12 +150,12 @@
         .upload-area {
             border: 2px dashed #cbd5e0;
             border-radius: 12px;
-            padding: 24px;
+            padding: 12px;
             text-align: center;
             cursor: pointer;
             transition: all 0.2s;
             background: #f8fafc;
-            margin-bottom: 16px;
+            margin-bottom: 10px;
             position: relative;
         }
         .upload-area:hover { border-color: var(--theme-teal); background: #f0fdfa; }
@@ -234,13 +234,13 @@
 
         /* Buttons */
         .btn-submit {
-            padding: 14px;
+            padding: 10px;
             background: linear-gradient(90deg, var(--theme-navy), var(--theme-teal));
             background-size: 200% auto;
             color: #fff;
             border: none;
             border-radius: 10px;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 800;
             transition: all 0.4s ease;
             letter-spacing: 0.5px;
@@ -260,17 +260,44 @@
             padding-top: 20px;
             border-top: 1.5px dashed #e2e8f0;
         }
-        .btn-download {
-            background: var(--theme-teal);
-            color: #fff;
-            padding: 13px 28px;
+        /* NAYA: Dono buttons ke common styles */
+        .btn-download, .btn-download-pdf {
+            padding: 13px 20px;
             border-radius: 10px;
             font-size: 15px;
             font-weight: 800;
             border: none;
-            transition: background 0.2s;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1; /* Taki dono buttons desktop pe exactly aadhi-aadhi jagah le */
+            text-decoration: none; /* Link ke underline ko hatane ke liye */
         }
-        .btn-download:hover { background: var(--theme-teal-hover); color: white; }
+
+        /* Banner Button (Teal) */
+        .btn-download {
+            background: var(--theme-teal);
+            color: #fff;
+        }
+        .btn-download:hover { 
+            background: var(--theme-teal-hover); 
+            color: white; 
+            transform: translateY(-2px); 
+            box-shadow: 0 4px 12px rgba(3, 184, 165, 0.3);
+        }
+
+        /* PDF Button (Navy) */
+        .btn-download-pdf {
+            background: var(--theme-navy);
+            color: #fff;
+        }
+        .btn-download-pdf:hover { 
+            background: var(--theme-navy-hover); 
+            color: white; 
+            transform: translateY(-2px); 
+            box-shadow: 0 4px 12px rgba(29, 80, 123, 0.3);
+        }
 
         /* Modal Styles */
         .modal-content {
@@ -374,7 +401,8 @@
 </div>
 
 <div class="container d-flex justify-content-center">
-    <div class="custom-card w-100" style="max-width: 560px;">
+    <!-- NAYA: max-width 700px kiya taki 2 columns achhe se fit ho jayein -->
+    <div class="custom-card w-100" style="max-width: 700px;">
 
         <!-- Form Logo & Centered Heading -->
         <div class="form-header">
@@ -394,104 +422,127 @@
         @endif
 
         {{-- ── Form ── --}}
+        {{-- ── Form ── --}}
         <form id="doctorForm" method="POST" action="{{ route('doctor.store') }}" enctype="multipart/form-data">
             @csrf
+            
+            <!-- Grid system ke liye row wrapper -->
+            <div class="row">
 
-            <div class="mb-3 position-relative">
-                <label>Employee Name <span style="color:var(--error-red)">*</span></label>
-                <input type="text" class="form-control" id="employee_name" name="employee_name" value="{{ old('employee_name') }}" placeholder="Enter employee name">
-            </div>
-
-            <div class="mb-3 position-relative">
-                <label>Employee Code <span style="color:#a0aec0; font-weight:600; text-transform:none">(Optional)</span></label>
-                <input type="text" class="form-control" name="employee_code" value="{{ old('employee_code') }}" placeholder="Enter employee code">
-            </div>
-
-            <div class="mb-3 position-relative">
-                <label>HQ <span style="color:var(--error-red)">*</span></label>
-                <input type="text" class="form-control" id="employee_hq" name="employee_hq" value="{{ old('employee_hq') }}" placeholder="Enter HQ location">
-            </div>
-
-            <hr class="divider">
-            <div class="mb-3 position-relative">
-                <label>Prefix <span style="color:var(--error-red)">*</span></label>
-                <select name="doctor_prefix" class="form-control">
-                    <option value="">Select Prefix</option>
-                    <option value="Dr." selected>Dr.</option>
-                </select>
-            </div>
-
-            <div class="mb-3 position-relative">
-                <label>Doctor Name <span style="color:var(--error-red)">*</span></label>
-                <input type="text" class="form-control" id="doctor_name" name="doctor_name" value="{{ old('doctor_name') }}" placeholder="Enter doctor name">
-            </div>
-
-            <div class="mb-3 position-relative">
-                <label>Qualification <span style="color:var(--error-red)">*</span></label>
-                <input type="text" class="form-control" id="doctor_qualification" name="doctor_qualification" value="{{ old('doctor_qualification') }}" placeholder="e.g. MBBS, MD">
-            </div>
-
-            <div class="mb-4 position-relative">
-                <label>Phone <span style="color:var(--error-red)">*</span></label>
-                <input type="tel" class="form-control" id="doctor_phone" name="doctor_phone"
-                       value="{{ old('doctor_phone') }}"
-                       placeholder="10-digit phone number"
-                       maxlength="10"
-                       inputmode="numeric"
-                       pattern="[0-9]*">
-            </div>
-
-            <hr class="divider">
-
-            <div class="photo-label">Doctor Photo <span style="color:var(--error-red)">*</span></div>
-
-            <!-- UPLOAD STATE -->
-            <div class="upload-area" id="uploadArea">
-                <input type="file" id="upload" accept="image/*">
-                <div class="upload-icon mb-2">
-                    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M7 10V9C7 6.23858 9.23858 4 12 4C14.7614 4 17 6.23858 17 9V10C19.2091 10 21 11.7909 21 14C21 15.4806 20.1956 16.8084 19 17.5M7 10C4.79086 10 3 11.7909 3 14C3 15.4806 3.8044 16.8084 5 17.5M7 10C7.43285 10 7.84965 10.0688 8.24254 10.1948M12 12V21M12 12L15 15M12 12L9 15"></path>
-                    </svg>
+                <!-- ROW 1: Employee Name & Code -->
+                <div class="col-md-6 mb-2 position-relative">
+                    <label>Employee Name <span style="color:var(--error-red)">*</span></label>
+                    <input type="text" class="form-control" id="employee_name" name="employee_name" value="{{ old('employee_name') }}" placeholder="Enter employee name">
                 </div>
-                <p class="mb-1" style="font-weight: 700; color: var(--text-dark);">Click to Upload Photo</p>
-                <p class="mb-0" style="font-size: 13px; color: var(--text-muted);">Crop your face clearly for the best result.</p>
-            </div>
 
-            <!-- PREVIEW STATE (Hidden initially) -->
-            <div class="preview-area" id="previewArea" style="display: none;">
-                <img id="crop-preview-img" src="" alt="Cropped Preview">
-                <div class="d-flex justify-content-center gap-3">
-                    <button type="button" class="btn btn-action btn-recrop" id="btnRecrop">
-                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="me-2"><path d="M6.13 1L6 16a2 2 0 0 0 2 2h15"></path><path d="M1 6.13L16 6a2 2 0 0 1 2 2v15"></path></svg>
-                        Re-Crop
-                    </button>
-                    <button type="button" class="btn btn-action btn-discard" id="btnDiscard">
-                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="me-2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                        Discard
-                    </button>
+                <div class="col-md-6 mb-2 position-relative">
+                    <label>Employee Code</label>
+                    <input type="text" class="form-control" name="employee_code" value="{{ old('employee_code') }}" placeholder="Enter employee code">
                 </div>
-            </div>
 
+                <!-- ROW 2: HQ (Full Width) -->
+                <div class="col-md-12 mb-2 position-relative">
+                    <label>HQ <span style="color:var(--error-red)">*</span></label>
+                    <input type="text" class="form-control" id="employee_hq" name="employee_hq" value="{{ old('employee_hq') }}" placeholder="Enter HQ location">
+                </div>
 
-            <input type="hidden" name="cropped_image" id="cropped_image">
+                <div class="col-12">
+                    <hr class="divider">
+                </div>
 
-            <button type="submit" class="btn btn-submit w-100 mt-2" id="submitBtn">Submit &amp; Generate Banner</button>
+                <!-- ROW 3: Prefix & Doctor Name -->
+                <div class="col-md-6 mb-2 position-relative">
+                    <label>Prefix <span style="color:var(--error-red)">*</span></label>
+                    <select name="doctor_prefix" class="form-control">
+                        <option value="">Select Prefix</option>
+                        <option value="Dr." selected>Dr.</option>
+                    </select>
+                </div>
+
+                <div class="col-md-6 mb-2 position-relative">
+                    <label>Doctor Name <span style="color:var(--error-red)">*</span></label>
+                    <input type="text" class="form-control" id="doctor_name" name="doctor_name" value="{{ old('doctor_name') }}" placeholder="Enter doctor name">
+                </div>
+
+                <!-- ROW 4: Qualification & Phone -->
+                <div class="col-md-6 mb-2 position-relative">
+                    <label>Qualification <span style="color:var(--error-red)">*</span></label>
+                    <input type="text" class="form-control" id="doctor_qualification" name="doctor_qualification" value="{{ old('doctor_qualification') }}" placeholder="e.g. MBBS, MD">
+                </div>
+
+                <div class="col-md-6 mb-2 position-relative">
+                    <label>Phone <span style="color:var(--error-red)">*</span></label>
+                    <input type="tel" class="form-control" id="doctor_phone" name="doctor_phone"
+                           value="{{ old('doctor_phone') }}"
+                           placeholder="10-digit phone number"
+                           maxlength="10"
+                           inputmode="numeric"
+                           pattern="[0-9]*">
+                </div>
+
+                <div class="col-12">
+                    <hr class="divider">
+                </div>
+
+                <!-- ROW 5: Photo Upload Section (Full Width) -->
+                <div class="col-12">
+                    <div class="photo-label">Doctor Photo <span style="color:var(--error-red)">*</span></div>
+
+                    <!-- UPLOAD STATE -->
+                    <div class="upload-area" id="uploadArea">
+                        <input type="file" id="upload" accept="image/*">
+                        <div class="upload-icon mb-2">
+                            <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M7 10V9C7 6.23858 9.23858 4 12 4C14.7614 4 17 6.23858 17 9V10C19.2091 10 21 11.7909 21 14C21 15.4806 20.1956 16.8084 19 17.5M7 10C4.79086 10 3 11.7909 3 14C3 15.4806 3.8044 16.8084 5 17.5M7 10C7.43285 10 7.84965 10.0688 8.24254 10.1948M12 12V21M12 12L15 15M12 12L9 15"></path>
+                            </svg>
+                        </div>
+                        <p class="mb-1" style="font-weight: 700; color: var(--text-dark);">Click to Upload Photo</p>
+                        <p class="mb-0" style="font-size: 13px; color: var(--text-muted);">Crop your face clearly for the best result.</p>
+                    </div>
+
+                    <!-- PREVIEW STATE (Hidden initially) -->
+                    <div class="preview-area" id="previewArea" style="display: none;">
+                        <img id="crop-preview-img" src="" alt="Cropped Preview">
+                        <div class="d-flex justify-content-center gap-3">
+                            <button type="button" class="btn btn-action btn-recrop" id="btnRecrop">
+                                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="me-2"><path d="M6.13 1L6 16a2 2 0 0 0 2 2h15"></path><path d="M1 6.13L16 6a2 2 0 0 1 2 2v15"></path></svg>
+                                Re-Crop
+                            </button>
+                            <button type="button" class="btn btn-action btn-discard" id="btnDiscard">
+                                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="me-2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2 2v2"></path></svg>
+                                Discard
+                            </button>
+                        </div>
+                    </div>
+
+                    <input type="hidden" name="cropped_image" id="cropped_image">
+                </div>
+
+                <!-- ROW 6: Submit Button (Full Width) -->
+                <div class="col-12">
+                    <button type="submit" class="btn btn-submit w-100 mt-2" id="submitBtn">Submit &amp; Generate Banner</button>
+                </div>
+
+            </div> <!-- row tag close -->
         </form>
 
         @if(session('banner_path'))
-            <div class="btn-download-wrap d-flex gap-2">
+            <div class="btn-download-wrap d-flex flex-column flex-sm-row justify-content-center gap-3">
 
-                <!-- IMAGE DOWNLOAD -->
-                <button class="btn btn-download d-inline-flex align-items-center" id="downloadBtn"
+                <button class="btn btn-download" id="downloadBtn"
                         data-url="{{ Storage::disk('s3')->url(session('banner_path')) }}"
                         data-name="{{ basename(session('banner_path')) }}">
+                    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="me-2">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
                     Download Banner
                 </button>
 
-                <!-- PDF DOWNLOAD -->
                 <a href="{{ route('download.pdf', basename(session('banner_path'))) }}"
-                   class="btn btn-danger d-inline-flex align-items-center">
-
+                   class="btn-download-pdf">
+                    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="me-2">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
                     Download PDF
                 </a>
 
