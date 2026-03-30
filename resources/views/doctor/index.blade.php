@@ -260,17 +260,44 @@
             padding-top: 20px;
             border-top: 1.5px dashed #e2e8f0;
         }
-        .btn-download {
-            background: var(--theme-teal);
-            color: #fff;
-            padding: 13px 28px;
+        /* NAYA: Dono buttons ke common styles */
+        .btn-download, .btn-download-pdf {
+            padding: 13px 20px;
             border-radius: 10px;
             font-size: 15px;
             font-weight: 800;
             border: none;
-            transition: background 0.2s;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1; /* Taki dono buttons desktop pe exactly aadhi-aadhi jagah le */
+            text-decoration: none; /* Link ke underline ko hatane ke liye */
         }
-        .btn-download:hover { background: var(--theme-teal-hover); color: white; }
+
+        /* Banner Button (Teal) */
+        .btn-download {
+            background: var(--theme-teal);
+            color: #fff;
+        }
+        .btn-download:hover { 
+            background: var(--theme-teal-hover); 
+            color: white; 
+            transform: translateY(-2px); 
+            box-shadow: 0 4px 12px rgba(3, 184, 165, 0.3);
+        }
+
+        /* PDF Button (Navy) */
+        .btn-download-pdf {
+            background: var(--theme-navy);
+            color: #fff;
+        }
+        .btn-download-pdf:hover { 
+            background: var(--theme-navy-hover); 
+            color: white; 
+            transform: translateY(-2px); 
+            box-shadow: 0 4px 12px rgba(29, 80, 123, 0.3);
+        }
 
         /* Modal Styles */
         .modal-content {
@@ -500,19 +527,22 @@
         </form>
 
         @if(session('banner_path'))
-            <div class="btn-download-wrap d-flex gap-2">
+            <div class="btn-download-wrap d-flex flex-column flex-sm-row justify-content-center gap-3">
 
-                <!-- IMAGE DOWNLOAD -->
-                <button class="btn btn-download d-inline-flex align-items-center" id="downloadBtn"
+                <button class="btn btn-download" id="downloadBtn"
                         data-url="{{ Storage::disk('s3')->url(session('banner_path')) }}"
                         data-name="{{ basename(session('banner_path')) }}">
+                    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="me-2">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
                     Download Banner
                 </button>
 
-                <!-- PDF DOWNLOAD -->
                 <a href="{{ route('download.pdf', basename(session('banner_path'))) }}"
-                   class="btn btn-danger d-inline-flex align-items-center">
-
+                   class="btn-download-pdf">
+                    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="me-2">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
                     Download PDF
                 </a>
 
