@@ -27,7 +27,7 @@ class DoctorExport implements FromCollection, WithHeadings
                     'employee_name'        => $doctor->employee_name,
                     'employee_code'        => $doctor->employee_code,
                     'employee_hq'          => $doctor->employee_hq,
-                    'doctor_name'          => $doctor->doctor_name,
+                    'doctor_name'          => $doctor->doctor_prefix.''.$doctor->doctor_name,
                     'doctor_qualification' => $doctor->doctor_qualification,
                     'doctor_phone'         => $doctor->doctor_phone,
 
