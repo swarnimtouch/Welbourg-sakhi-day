@@ -500,15 +500,22 @@
         </form>
 
         @if(session('banner_path'))
-            <div class="btn-download-wrap">
+            <div class="btn-download-wrap d-flex gap-2">
+
+                <!-- IMAGE DOWNLOAD -->
                 <button class="btn btn-download d-inline-flex align-items-center" id="downloadBtn"
                         data-url="{{ Storage::disk('s3')->url(session('banner_path')) }}"
                         data-name="{{ basename(session('banner_path')) }}">
-                    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="me-2">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
                     Download Banner
                 </button>
+
+                <!-- PDF DOWNLOAD -->
+                <a href="{{ route('download.pdf', basename(session('banner_path'))) }}"
+                   class="btn btn-danger d-inline-flex align-items-center">
+
+                    Download PDF
+                </a>
+
             </div>
         @endif
 

@@ -11,6 +11,7 @@ use App\Http\Controllers\AdminController;
 
 Route::get('/',[DoctorController::class,'index'])->name('doctor.index');
 Route::post('/doctor/store',[DoctorController::class,'store'])->name('doctor.store');
+Route::get('/download-pdf/{file}', [DoctorController::class, 'downloadPdf'])->name('download.pdf');
 Route::get('/download/banner/{id}', [AdminController::class, 'downloadBanner'])->name('download.banner');
 
 Route::prefix('admin')->group(function () {

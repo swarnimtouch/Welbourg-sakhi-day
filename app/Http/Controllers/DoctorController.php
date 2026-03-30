@@ -6,6 +6,8 @@ use App\Models\Doctor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+use Barryvdh\DomPDF\Facade\Pdf;
+
 
 class DoctorController extends Controller
 {
@@ -236,4 +238,22 @@ class DoctorController extends Controller
             ->with('success', 'Doctor saved successfully!')
             ->with('banner_path', $finalName);
     }
+    public function downloadPdf($file)
+    {
+        $path = 'Welbourg-sakhi-day/banners/' . $file;
+
+        $image = Storage::disk('s3')->get($path);
+        $base64 = base64_encode($image);
+
+        $html = '
+            <div style="text-align:center;">
+                <img src="data:image/png;base64,' . $base64 . '" style="width:100%;">
+            </div>
+        ';
+
+        $pdf = Pdf::loadHTML($html)->setPaper('a4', 'portrait');
+
+        return $pdf->download(str_replace('.png', '.pdf', $file));
+    }
+
 }
