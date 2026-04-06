@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Aws\S3\S3Client;
 use ZipArchive;
+use ZipStream\ZipStream;
+use ZipStream\Option\Archive as ArchiveOptions;
 
 
 class AdminController extends Controller
@@ -146,58 +148,59 @@ class AdminController extends Controller
         ]);
     }
     public function downloadAllZip()
-    {
-        ini_set('memory_limit', '512M');
-        set_time_limit(0); // unlimited time
+{
+    set_time_limit(0);
 
-        $baseFolder = 'Welbourg-sakhi-day/banners/';
+    $doctors = Doctor::whereNotNull('doctor_banner_path')
+                     ->select('id', 'doctor_name', 'doctor_banner_path')
+                     ->get();
 
-        // ✅ DB se paths lo (S3 list call slow hoti hai)
-        $doctors = Doctor::whereNotNull('doctor_banner_path')->pluck('doctor_banner_path');
+    if ($doctors->isEmpty()) {
+        return back()->with('error', 'Koi banner nahi mila.');
+    }
 
-        if ($doctors->isEmpty()) {
-            return back()->with('error', 'Koi banner nahi mila.');
-        }
+    $zipFileName = 'all_banners_' . date('d-m-Y') . '.zip';
 
-        $zipFileName = 'all_banners_' . time() . '.zip';
-        $zipPath = storage_path('app/' . $zipFileName);
+    return response()->stream(function () use ($doctors, $zipFileName) {
 
-        $zip = new \ZipArchive();
-        $zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+        $options = new ArchiveOptions();
+        $options->setSendHttpHeaders(false);
+        $options->setFlushOutput(true);     // ✅ Turant browser ko bhejta hai
+        $options->setZeroHeader(true);      // ✅ Content-Length nahi chahiye streaming mein
 
-        foreach ($doctors as $filePath) {
+        $zip = new ZipStream($zipFileName, $options);
+
+        foreach ($doctors as $doctor) {
             try {
-                // ✅ S3 presigned URL se directly download (fast)
-                $url = Storage::disk('s3')->temporaryUrl($filePath, now()->addMinutes(10));
+                // ✅ S3 se stream lo — RAM mein store nahi hoga
+                $stream = Storage::disk('s3')->readStream($doctor->doctor_banner_path);
 
-                $tempPath = tempnam(sys_get_temp_dir(), 'bnr_');
+                if (!$stream) continue;
 
-                // ✅ cURL se fast download
-                $ch = curl_init($url);
-                $fp = fopen($tempPath, 'wb');
-                curl_setopt($ch, CURLOPT_FILE, $fp);
-                curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-                curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-                curl_exec($ch);
-                curl_close($ch);
-                fclose($fp);
+                $fileName = \Str::slug($doctor->doctor_name) . '_' . $doctor->id . '.png';
 
-                $zip->addFile($tempPath, basename($filePath));
+                $zip->addFileFromStream($fileName, $stream);
+
+                // ✅ Stream close karo turant — memory free
+                if (is_resource($stream)) fclose($stream);
 
             } catch (\Exception $e) {
-                continue; // ek fail ho toh skip karo, baaki chalta rahe
+                \Log::error('Banner zip skip: ' . $e->getMessage());
+                continue;
             }
         }
 
-        $zip->close();
+        $zip->finish();
 
-        // ✅ Temp files delete karo
-        foreach (glob(sys_get_temp_dir() . '/bnr_*') as $tmp) {
-            @unlink($tmp);
-        }
+    }, 200, [
+        'Content-Type'              => 'application/zip',
+        'Content-Disposition'       => 'attachment; filename="' . $zipFileName . '"',
+        'Cache-Control'             => 'no-cache, no-store',
+        'X-Accel-Buffering'         => 'no',  // ✅ Nginx buffering band karo
+        'Transfer-Encoding'         => 'chunked',
+    ]);
+}
 
-        return response()->download($zipPath, $zipFileName)->deleteFileAfterSend(true);
-    }
 
 
 }
