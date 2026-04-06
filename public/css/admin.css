@@ -448,13 +448,75 @@ body {
     color: var(--border-hard);
 }
 
+/* Update 1: Vertically center align kiya taki title aur buttons ek line me aayen */
 .page-header {
     display: flex;
-    align-items: flex-start;
+    align-items: center; 
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 12px;
     margin-bottom: 24px;
+}
+
+/* Update 2: Ye naya code aap CSS me bottom me ya .page-header ke baad add kar lein */
+/* Ye class buttons ko ek sath right me rakhegi */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px; /* Dono buttons ke beech ki spacing */
+    flex-wrap: wrap;
+}
+
+/* Export button ke liye aapka Teal Color Scheme */
+.btn-theme-teal {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background: var(--theme-teal);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    box-shadow: 0 4px 15px rgba(3, 184, 165, 0.2);
+    text-decoration: none;
+}
+
+.btn-theme-teal:hover {
+    background: var(--theme-teal-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(3, 184, 165, 0.3);
+    color: #fff;
+}
+
+/* Download button ke liye aapka Navy Color Scheme */
+.btn-theme-navy {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background: var(--theme-navy);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    box-shadow: 0 4px 15px rgba(29, 80, 123, 0.2);
+    text-decoration: none;
+}
+
+.btn-theme-navy:hover {
+    background: var(--theme-navy-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(29, 80, 123, 0.3);
+    color: #fff;
 }
 
 .page-title-group h4 {

@@ -24,7 +24,6 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('/doctor',         [AdminController::class, 'doctor'])->name('doctor.index');
     Route::get('/doctor/export',  [AdminController::class, 'doctor_export'])->name('doctor.export');
     Route::post('doctor/destroy/{id}', [AdminController::class, 'doctor_destroy'])->name('doctor.destroy');
-//    Route::get('/download-mosaic-zip', [AdminController::class, 'downloadAllBanners'])
-//        ->name('banners.downloadAll');
+
 });
 Route::get('/doctors/download-all-zip', [AdminController::class, 'downloadAllZip'])->name('doctor.downloadAllZip');
