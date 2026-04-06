@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use Aws\S3\S3Client;
 use ZipStream\ZipStream;
 use ZipStream\OperationMode;
+use ZipArchive;
 
 
 
@@ -147,48 +148,58 @@ class AdminController extends Controller
             'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
         ]);
     }
-
-
     public function downloadAllZip()
     {
-        set_time_limit(0);
+        ini_set('memory_limit', '512M');
+        set_time_limit(0); // unlimited time
 
-        $doctors = Doctor::whereNotNull('doctor_banner_path')
-            ->pluck('doctor_banner_path');
+        $baseFolder = 'Welbourg-sakhi-day/banners/';
+
+        // ✅ DB se paths lo (S3 list call slow hoti hai)
+        $doctors = Doctor::whereNotNull('doctor_banner_path')->pluck('doctor_banner_path');
 
         if ($doctors->isEmpty()) {
             return back()->with('error', 'Koi banner nahi mila.');
         }
 
-        // ✅ Correct constructor (v3)
-        $zip = new ZipStream(
-            operationMode: OperationMode::NORMAL,
-            outputName: 'all_banners.zip'
-        );
+        $zipFileName = 'all_banners_' . time() . '.zip';
+        $zipPath = storage_path('app/' . $zipFileName);
+
+        $zip = new \ZipArchive();
+        $zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
 
         foreach ($doctors as $filePath) {
             try {
-                $url = Storage::disk('s3')->temporaryUrl(
-                    $filePath,
-                    now()->addMinutes(10)
-                );
+                // ✅ S3 presigned URL se directly download (fast)
+                $url = Storage::disk('s3')->temporaryUrl($filePath, now()->addMinutes(10));
 
-                $stream = fopen($url, 'r');
+                $tempPath = tempnam(sys_get_temp_dir(), 'bnr_');
 
-                if ($stream) {
-                    $zip->addFileFromStream(
-                        basename($filePath),
-                        $stream
-                    );
-                    fclose($stream);
-                }
+                // ✅ cURL se fast download
+                $ch = curl_init($url);
+                $fp = fopen($tempPath, 'wb');
+                curl_setopt($ch, CURLOPT_FILE, $fp);
+                curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+                curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+                curl_exec($ch);
+                curl_close($ch);
+                fclose($fp);
+
+                $zip->addFile($tempPath, basename($filePath));
 
             } catch (\Exception $e) {
-                continue;
+                continue; // ek fail ho toh skip karo, baaki chalta rahe
             }
         }
 
-        $zip->finish();
+        $zip->close();
+
+        // ✅ Temp files delete karo
+        foreach (glob(sys_get_temp_dir() . '/bnr_*') as $tmp) {
+            @unlink($tmp);
+        }
+
+        return response()->download($zipPath, $zipFileName)->deleteFileAfterSend(true);
     }
 
 
