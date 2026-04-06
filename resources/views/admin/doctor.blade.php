@@ -40,24 +40,24 @@
         <div class="page-title-group">
             <h4>Doctors</h4>
         </div>
-        
+
         <div class="header-actions">
             <a href="{{ route('admin.doctor.export') }}{{ request('search') ? '?search='.request('search') : '' }}"
                class="btn-theme-teal">
                 <i class="fas fa-file-excel"></i> Export Excel
             </a>
-            <button id="downloadZipBtn" class="btn-theme-navy">
-                <i class="fas fa-download"></i> Download All Banners
-            </button>
-            <div id="progressBox" style="display:none; width:100%; max-width:400px; margin-top:8px;">
-                <div class="progress">
-                    <div id="progressBar" class="progress-bar" style="width:0%;"></div>
-                </div>
-                <small id="progressText">Preparing...</small>
-            </div>
+{{--            <button id="downloadZipBtn" class="btn-theme-navy">--}}
+{{--                <i class="fas fa-download"></i> Download All Banners--}}
+{{--            </button>--}}
+{{--            <div id="progressBox" style="display:none; width:100%; max-width:400px; margin-top:8px;">--}}
+{{--                <div class="progress">--}}
+{{--                    <div id="progressBar" class="progress-bar" style="width:0%;"></div>--}}
+{{--                </div>--}}
+{{--                <small id="progressText">Preparing...</small>--}}
+{{--            </div>--}}
 
         </div>
-        
+
     </div>
 
     @if(session('success'))
@@ -557,101 +557,101 @@
             });
         })();
     </script>
-   <script>
+{{--   <script>--}}
 
-document.getElementById('downloadZipBtn').addEventListener('click', async function () {
-    const btn         = this;
-    const progressBox = document.getElementById('progressBox');
-    const progressBar = document.getElementById('progressBar');
-    const progressTxt = document.getElementById('progressText');
+{{--document.getElementById('downloadZipBtn').addEventListener('click', async function () {--}}
+{{--    const btn         = this;--}}
+{{--    const progressBox = document.getElementById('progressBox');--}}
+{{--    const progressBar = document.getElementById('progressBar');--}}
+{{--    const progressTxt = document.getElementById('progressText');--}}
 
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparing...';
-    progressBox.style.display = 'block';
+{{--    btn.disabled = true;--}}
+{{--    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparing...';--}}
+{{--    progressBox.style.display = 'block';--}}
 
-    const update = (text, pct) => {
-        progressBar.style.width = pct + '%';
-        progressTxt.textContent  = text;
-    };
+{{--    const update = (text, pct) => {--}}
+{{--        progressBar.style.width = pct + '%';--}}
+{{--        progressTxt.textContent  = text;--}}
+{{--    };--}}
 
-    try {
-        update('Fetching file list from server...', 5);
+{{--    try {--}}
+{{--        update('Fetching file list from server...', 5);--}}
 
-        // Step 1: Presigned URLs fetch karo
-        const res = await fetch("{{ route('admin.banners.urls') }}", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': "{{ csrf_token() }}"
-            },
-            body: JSON.stringify({ ids: [] })
-        });
+{{--        // Step 1: Presigned URLs fetch karo--}}
+{{--        const res = await fetch("{{ route('admin.banners.urls') }}", {--}}
+{{--            method: 'POST',--}}
+{{--            headers: {--}}
+{{--                'Content-Type': 'application/json',--}}
+{{--                'X-CSRF-TOKEN': "{{ csrf_token() }}"--}}
+{{--            },--}}
+{{--            body: JSON.stringify({ ids: [] })--}}
+{{--        });--}}
 
-        const data  = await res.json();
-        const files = data.files;
+{{--        const data  = await res.json();--}}
+{{--        const files = data.files;--}}
 
-        if (!files || files.length === 0) {
-            Swal.fire({ icon: 'info', title: 'No Banners', text: 'No banners found to download.', background: '#1a2035', color: '#e8eaf6' });
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-download"></i> Download All Banners';
-            progressBox.style.display = 'none';
-            return;
-        }
+{{--        if (!files || files.length === 0) {--}}
+{{--            Swal.fire({ icon: 'info', title: 'No Banners', text: 'No banners found to download.', background: '#1a2035', color: '#e8eaf6' });--}}
+{{--            btn.disabled = false;--}}
+{{--            btn.innerHTML = '<i class="fas fa-download"></i> Download All Banners';--}}
+{{--            progressBox.style.display = 'none';--}}
+{{--            return;--}}
+{{--        }--}}
 
-        update(`0 / ${files.length} downloading...`, 10);
+{{--        update(`0 / ${files.length} downloading...`, 10);--}}
 
-        const zip       = new JSZip();
-        const BATCH     = 10; // ✅ 10 parallel at a time
-        let   done      = 0;
+{{--        const zip       = new JSZip();--}}
+{{--        const BATCH     = 10; // ✅ 10 parallel at a time--}}
+{{--        let   done      = 0;--}}
 
-        // Step 2: Batch download
-        for (let i = 0; i < files.length; i += BATCH) {
-            const batch = files.slice(i, i + BATCH);
+{{--        // Step 2: Batch download--}}
+{{--        for (let i = 0; i < files.length; i += BATCH) {--}}
+{{--            const batch = files.slice(i, i + BATCH);--}}
 
-            await Promise.all(batch.map(async (file) => {
-                try {
-                    const r    = await fetch(file.url);
-                    const blob = await r.blob();
-                    zip.file(file.name, blob);
-                } catch (e) {
-                    console.warn('Skipped:', file.name);
-                }
-                done++;
-                const pct = Math.round(10 + (done / files.length) * 80);
-                update(`${done} / ${files.length} downloaded...`, pct);
-            }));
-        }
+{{--            await Promise.all(batch.map(async (file) => {--}}
+{{--                try {--}}
+{{--                    const r    = await fetch(file.url);--}}
+{{--                    const blob = await r.blob();--}}
+{{--                    zip.file(file.name, blob);--}}
+{{--                } catch (e) {--}}
+{{--                    console.warn('Skipped:', file.name);--}}
+{{--                }--}}
+{{--                done++;--}}
+{{--                const pct = Math.round(10 + (done / files.length) * 80);--}}
+{{--                update(`${done} / ${files.length} downloaded...`, pct);--}}
+{{--            }));--}}
+{{--        }--}}
 
-        update('Creating ZIP file...', 92);
+{{--        update('Creating ZIP file...', 92);--}}
 
-        // Step 3: ZIP generate
-        const content = await zip.generateAsync(
-            { type: 'blob' },
-            (meta) => {
-                const pct = Math.round(92 + meta.percent * 0.08);
-                update('Compressing ZIP... ' + Math.round(meta.percent) + '%', pct);
-            }
-        );
+{{--        // Step 3: ZIP generate--}}
+{{--        const content = await zip.generateAsync(--}}
+{{--            { type: 'blob' },--}}
+{{--            (meta) => {--}}
+{{--                const pct = Math.round(92 + meta.percent * 0.08);--}}
+{{--                update('Compressing ZIP... ' + Math.round(meta.percent) + '%', pct);--}}
+{{--            }--}}
+{{--        );--}}
 
-        saveAs(content, 'banners_' + Date.now() + '.zip');
+{{--        saveAs(content, 'banners_' + Date.now() + '.zip');--}}
 
-        update('✅ Download complete!', 100);
-        btn.innerHTML = '<i class="fas fa-check"></i> Done!';
+{{--        update('✅ Download complete!', 100);--}}
+{{--        btn.innerHTML = '<i class="fas fa-check"></i> Done!';--}}
 
-        setTimeout(() => {
-            btn.disabled  = false;
-            btn.innerHTML = '<i class="fas fa-download"></i> Download All Banners';
-            progressBox.style.display = 'none';
-            progressBar.style.width   = '0%';
-        }, 3000);
+{{--        setTimeout(() => {--}}
+{{--            btn.disabled  = false;--}}
+{{--            btn.innerHTML = '<i class="fas fa-download"></i> Download All Banners';--}}
+{{--            progressBox.style.display = 'none';--}}
+{{--            progressBar.style.width   = '0%';--}}
+{{--        }, 3000);--}}
 
-    } catch (err) {
-        console.error(err);
-        Swal.fire({ icon: 'error', title: 'Error', text: 'Something went wrong. Please try again.', background: '#1a2035', color: '#e8eaf6' });
-        btn.disabled  = false;
-        btn.innerHTML = '<i class="fas fa-download"></i> Download All Banners';
-        progressBox.style.display = 'none';
-    }
-});
-</script>
+{{--    } catch (err) {--}}
+{{--        console.error(err);--}}
+{{--        Swal.fire({ icon: 'error', title: 'Error', text: 'Something went wrong. Please try again.', background: '#1a2035', color: '#e8eaf6' });--}}
+{{--        btn.disabled  = false;--}}
+{{--        btn.innerHTML = '<i class="fas fa-download"></i> Download All Banners';--}}
+{{--        progressBox.style.display = 'none';--}}
+{{--    }--}}
+{{--});--}}
+{{--</script>--}}
 @endpush
