@@ -17,6 +17,10 @@
            class="btn-add btn-export">
             <i class="fas fa-file-excel"></i> Export Excel
         </a>
+        <button id="downloadAllBtn" class="btn btn-primary">
+            Download All Banners
+        </button>
+
     </div>
 
     @if(session('success'))
@@ -513,4 +517,34 @@
             });
         })();
     </script>
+    <script>
+        document.getElementById('downloadAllBtn').addEventListener('click', async function () {
+            this.disabled = true;
+            this.innerText = 'Fetching...';
+
+            const res  = await fetch('{{ route("admin.banners.downloadAll") }}');
+            const files = await res.json();
+
+            let i = 0;
+            const interval = setInterval(() => {
+                if (i >= files.length) {
+                    clearInterval(interval);
+                    this.disabled = false;
+                    this.innerText = 'Download All Banners';
+                    return;
+                }
+
+                const a = document.createElement('a');
+                a.href     = files[i].url;
+                a.download = files[i].filename;
+                a.target   = '_blank';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+
+                i++;
+            }, 800); // ⬅️ 800ms gap — browser block na kare isliye
+        });
+    </script>
+
 @endpush

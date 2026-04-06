@@ -143,7 +143,21 @@ class AdminController extends Controller
             'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
         ]);
     }
+    public function downloadAllBanners()
+    {
+        $doctors = Doctor::whereNotNull('doctor_banner_path')->get();
 
+        $urls = $doctors->map(function ($doctor) {
+            // Temporary signed URL (15 min valid)
+            return [
+                'url'      => Storage::disk('s3')->temporaryUrl($doctor->doctor_banner_path, now()->addMinutes(15)),
+                'filename' => 'banner_' . \Str::slug($doctor->doctor_name) . '.'
+                    . pathinfo($doctor->doctor_banner_path, PATHINFO_EXTENSION),
+            ];
+        });
+
+        return response()->json($urls);
+    }
 
 
 }
