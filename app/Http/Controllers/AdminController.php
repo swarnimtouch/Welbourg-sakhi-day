@@ -147,16 +147,45 @@ class AdminController extends Controller
     {
         $doctors = Doctor::whereNotNull('doctor_banner_path')->get();
 
-        $urls = $doctors->map(function ($doctor) {
-            // Temporary signed URL (15 min valid)
-            return [
-                'url'      => Storage::disk('s3')->temporaryUrl($doctor->doctor_banner_path, now()->addMinutes(15)),
-                'filename' => 'banner_' . \Str::slug($doctor->doctor_name) . '.'
-                    . pathinfo($doctor->doctor_banner_path, PATHINFO_EXTENSION),
-            ];
-        });
+        if ($doctors->isEmpty()) {
+            return back()->with('error', 'No banners found.');
+        }
 
-        return response()->json($urls);
+        // ✅ ZIP file path (temporary)
+        $zipFileName = 'banners_' . now()->format('Ymd_His') . '.zip';
+        $zipPath     = storage_path('app/' . $zipFileName);
+
+        $zip = new \ZipArchive();
+
+        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+            return back()->with('error', 'Could not create ZIP file.');
+        }
+
+        foreach ($doctors as $doctor) {
+            $path = $doctor->doctor_banner_path;
+
+            try {
+                if (!Storage::disk('s3')->exists($path)) continue;
+
+                $fileContent = Storage::disk('s3')->get($path);
+                $ext         = pathinfo($path, PATHINFO_EXTENSION);
+                $fileName    = 'banner_' . \Str::slug($doctor->doctor_name) . '.' . $ext;
+
+                // ✅ 'banners/' folder ke andar store hoga ZIP mein
+                $zip->addFromString('banners/' . $fileName, $fileContent);
+
+            } catch (\Exception $e) {
+                \Log::warning('Banner ZIP skip: ' . $path . ' | ' . $e->getMessage());
+                continue;
+            }
+        }
+
+        $zip->close();
+
+        // ✅ Download karo aur server se delete karo
+        return response()->download($zipPath, $zipFileName, [
+            'Content-Type' => 'application/zip',
+        ])->deleteFileAfterSend(true);
     }
 
 
