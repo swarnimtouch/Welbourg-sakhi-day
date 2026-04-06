@@ -143,20 +143,58 @@ class AdminController extends Controller
             'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
         ]);
     }
-    public function downloadAllBanners()
+    public function downloadAllZip()
     {
-        $doctors = Doctor::whereNotNull('doctor_banner_path')->get();
+        ini_set('memory_limit', '512M');
+        set_time_limit(0); // unlimited time
 
-        $urls = $doctors->map(function ($doctor) {
-            // Temporary signed URL (15 min valid)
-            return [
-                'url'      => Storage::disk('s3')->temporaryUrl($doctor->doctor_banner_path, now()->addMinutes(15)),
-                'filename' => 'banner_' . \Str::slug($doctor->doctor_name) . '.'
-                    . pathinfo($doctor->doctor_banner_path, PATHINFO_EXTENSION),
-            ];
-        });
+        $baseFolder = 'Welbourg-sakhi-day/banners/';
 
-        return response()->json($urls);
+        // ✅ DB se paths lo (S3 list call slow hoti hai)
+        $doctors = Doctor::whereNotNull('doctor_banner_path')->pluck('doctor_banner_path');
+
+        if ($doctors->isEmpty()) {
+            return back()->with('error', 'Koi banner nahi mila.');
+        }
+
+        $zipFileName = 'all_banners_' . time() . '.zip';
+        $zipPath = storage_path('app/' . $zipFileName);
+
+        $zip = new \ZipArchive();
+        $zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+
+        foreach ($doctors as $filePath) {
+            try {
+                // ✅ S3 presigned URL se directly download (fast)
+                $url = Storage::disk('s3')->temporaryUrl($filePath, now()->addMinutes(10));
+
+                $tempPath = tempnam(sys_get_temp_dir(), 'bnr_');
+
+                // ✅ cURL se fast download
+                $ch = curl_init($url);
+                $fp = fopen($tempPath, 'wb');
+                curl_setopt($ch, CURLOPT_FILE, $fp);
+                curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+                curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+                curl_exec($ch);
+                curl_close($ch);
+                fclose($fp);
+
+                $zip->addFile($tempPath, basename($filePath));
+
+            } catch (\Exception $e) {
+                continue; // ek fail ho toh skip karo, baaki chalta rahe
+            }
+        }
+
+        $zip->close();
+
+        // ✅ Temp files delete karo
+        foreach (glob(sys_get_temp_dir() . '/bnr_*') as $tmp) {
+            @unlink($tmp);
+        }
+
+        return response()->download($zipPath, $zipFileName)->deleteFileAfterSend(true);
     }
 
 
