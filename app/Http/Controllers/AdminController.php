@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Aws\S3\S3Client;
+use ZipArchive;
 
 
 class AdminController extends Controller
@@ -143,50 +145,44 @@ class AdminController extends Controller
             'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
         ]);
     }
-    public function downloadAllBanners()
-    {
-        $doctors = Doctor::whereNotNull('doctor_banner_path')->get();
+ public function downloadAllBanners(Request $request)
+{
+    $ids = $request->input('ids', []);
 
-        if ($doctors->isEmpty()) {
-            return back()->with('error', 'No banners found.');
-        }
-
-        // ✅ ZIP file path (temporary)
-        $zipFileName = 'banners_' . now()->format('Ymd_His') . '.zip';
-        $zipPath     = storage_path('app/' . $zipFileName);
-
-        $zip = new \ZipArchive();
-
-        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
-            return back()->with('error', 'Could not create ZIP file.');
-        }
-
-        foreach ($doctors as $doctor) {
-            $path = $doctor->doctor_banner_path;
-
-            try {
-                if (!Storage::disk('s3')->exists($path)) continue;
-
-                $fileContent = Storage::disk('s3')->get($path);
-                $ext         = pathinfo($path, PATHINFO_EXTENSION);
-                $fileName    = 'banner_' . \Str::slug($doctor->doctor_name) . '.' . $ext;
-
-                // ✅ 'banners/' folder ke andar store hoga ZIP mein
-                $zip->addFromString('banners/' . $fileName, $fileContent);
-
-            } catch (\Exception $e) {
-                \Log::warning('Banner ZIP skip: ' . $path . ' | ' . $e->getMessage());
-                continue;
-            }
-        }
-
-        $zip->close();
-
-        // ✅ Download karo aur server se delete karo
-        return response()->download($zipPath, $zipFileName, [
-            'Content-Type' => 'application/zip',
-        ])->deleteFileAfterSend(true);
+    $query = Doctor::whereNotNull('doctor_banner_path');
+    
+    if (!empty($ids)) {
+        $query->whereIn('id', $ids);
     }
+
+    // ✅ Sirf path fetch karo, saari fields nahi
+    $doctors = $query->select('id', 'doctor_name', 'doctor_banner_path')->get();
+
+    $s3Client = new S3Client([
+        'region'      => config('filesystems.disks.s3.region'),
+        'version'     => 'latest',
+        'credentials' => [
+            'key'    => config('filesystems.disks.s3.key'),
+            'secret' => config('filesystems.disks.s3.secret'),
+        ],
+    ]);
+
+    $urls = $doctors->map(function ($doctor) use ($s3Client) {
+        $cmd = $s3Client->getCommand('GetObject', [
+            'Bucket' => config('filesystems.disks.s3.bucket'),
+            'Key'    => $doctor->doctor_banner_path,
+        ]);
+
+        $presignedUrl = $s3Client->createPresignedRequest($cmd, '+15 minutes');
+
+        return [
+            'url'  => (string) $presignedUrl->getUri(),
+            'name' => \Str::slug($doctor->doctor_name) . '_' . $doctor->id . '.png',
+        ];
+    });
+
+    return response()->json(['files' => $urls]);
+}
 
 
 }
