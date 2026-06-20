@@ -32,6 +32,9 @@ class DoctorExport implements FromCollection, WithHeadings
                     'photo_url' => $doctor->doctor_photo
                         ? Storage::disk('s3')->url($doctor->doctor_photo)
                         : '',
+                    'banner_url' => $doctor->doctor_banner_path
+                        ? Storage::disk('s3')->url($doctor->doctor_banner_path)
+                        : '',
                 ];
             });
     }
@@ -42,6 +45,7 @@ class DoctorExport implements FromCollection, WithHeadings
             'Employee Code',
             'Name',
             'Photo URL',
+            'Banner URL',
         ];
     }
 }

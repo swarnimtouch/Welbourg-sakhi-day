@@ -414,7 +414,6 @@
 
         <!-- Form Logo & Centered Heading -->
         <div class="form-header">
-            <img src="{{ asset('images/form_logo.png') }}" alt="Form Logo">
             <h2>Employee Registration</h2>
         </div>
 
