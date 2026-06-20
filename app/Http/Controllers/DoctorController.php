@@ -3,11 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Doctor;
-use Illuminate\Http\Request;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage;
 use Barryvdh\DomPDF\Facade\Pdf;
-
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class DoctorController extends Controller
 {
@@ -18,242 +17,132 @@ class DoctorController extends Controller
 
     public function store(Request $request)
     {
-        // ✅ Validation
-        $request->validate([
-            'employee_name'        => 'required',
-            'employee_hq'          => 'required',
-            'doctor_name'          => 'required',
-            'doctor_qualification' => 'required',
-            'doctor_phone'         => 'required|digits:10',
-            'cropped_image'        => 'required',
-            'doctor_prefix' => 'nullable',
+        $data = $request->validate([
+            'employee_code' => ['required', 'string', 'max:255'],
+            'doctor_name' => ['required', 'string', 'max:255'],
+            'cropped_image' => ['required', 'string'],
         ]);
 
-        $data = $request->all();
-
-        // ✅ Clean doctor name
-        $doctorSlug = Str::slug($data['doctor_name']);
-
-        // ✅ HARDCODE S3 FOLDER 🔥
         $baseFolder = 'Welbourg-sakhi-day';
+        $slug = Str::slug($data['doctor_name']) ?: 'employee';
+        $timestamp = now()->format('YmdHisv');
+        $photoFile = $slug . '_' . $timestamp . '.png';
+        $bannerFile = $slug . '_' . $timestamp . '_banner.png';
 
-        $imageName = null;
-        $finalName = null;
+        $encodedImage = preg_replace('/^data:image\/[a-zA-Z0-9.+-]+;base64,/', '', $data['cropped_image']);
+        $imageData = base64_decode(str_replace(' ', '+', $encodedImage), true);
+        $employeeImage = $imageData !== false ? @imagecreatefromstring($imageData) : false;
 
-        if (!empty($data['cropped_image'])) {
-
-            // ── Base64 Clean ──
-            $image = preg_replace('/^data:image\/\w+;base64,/', '', $data['cropped_image']);
-            $image = str_replace(' ', '+', $image);
-            $imageData = base64_decode($image);
-
-            // ✅ File names
-            $imageName = $doctorSlug . '_' . time() . '.png';
-            $bannerName = $doctorSlug . '_' . time() . '_banner.png';
-
-            // ── Upload Doctor Photo to S3 ──
-            Storage::disk('s3')->put(
-                $baseFolder . '/photos/' . $imageName,
-                $imageData,
-                'public'
-            );
-
-            // ── TEMP: create image resource from string ──
-            $doctorImage = imagecreatefromstring($imageData);
-
-            // ── Load Banner Background (LOCAL) ──
-            $bgPath = public_path('uploads/images/background.jpg');
-            $banner = imagecreatefromjpeg($bgPath);
-
-            // 🎯 SETTINGS
-            $size  = 814;
-            $destX = 213;
-            $destY = 752;
-
-            // Resize
-            $resized = imagecreatetruecolor($size, $size);
-            imagealphablending($resized, false);
-            imagesavealpha($resized, true);
-
-            $transparent = imagecolorallocatealpha($resized, 0, 0, 0, 127);
-            imagefill($resized, 0, 0, $transparent);
-
-            imagecopyresampled(
-                $resized,
-                $doctorImage,
-                0, 0,
-                0, 0,
-                $size, $size,
-                imagesx($doctorImage),
-                imagesy($doctorImage)
-            );
-
-            // Merge on banner
-            imagecopy($banner, $resized, $destX, $destY, 0, 0, $size, $size);
-            // ── TEXT SETTINGS ──
-            // Font path
-            // Fonts
-            $fontBold    = public_path('fonts/RobotoCondensed-Bold.ttf');
-            $fontRegular = public_path('fonts/RobotoCondensed-Regular.ttf');
-
-            // Colors
-            $blueColor = imagecolorallocate($banner, 21, 73, 109);
-
-            // Gradient colors (RED → ORANGE)
-            $startColor = [237, 28, 36];
-            $endColor   = [255, 127, 39];
-
-            // Data
-            $prefix = $data['doctor_prefix'] ?? '';
-            $name   = trim($prefix . ' ' . $data['doctor_name']);
-            $qual  = trim($data['doctor_qualification']);
-            $phone = $data['doctor_phone'];
-
-            // Width limit
-            $startX = 1235;
-            $endX   = 2480;
-            $maxWidth = $endX - $startX;
-
-
-            // =======================
-            // 🎯 AUTO FIT FUNCTION
-            // =======================
-            function fitTextSize($text, $font, $maxWidth, $startSize) {
-                $size = $startSize;
-
-                while ($size > 20) {
-                    $box = imagettfbbox($size, 0, $font, $text);
-                    $width = $box[2] - $box[0];
-
-                    if ($width <= $maxWidth) {
-                        return $size;
-                    }
-                    $size--;
-                }
-
-                return $size;
-            }
-
-
-            // =======================
-            // 🎯 NAME (GRADIENT + AUTO FIT)
-            // =======================
-            // =======================
-            // 🎯 NAME (THODA NICHE + BALANCED SIZE)
-            // =======================
-            $nameSize = fitTextSize($name, $fontBold, $maxWidth, 75); // 👈 thoda kam
-
-            $x = $startX;
-            $y = 1360; // 👈 NICHE LAAYA (important fix)
-
-            $letters = str_split($name);
-            $total   = count($letters);
-
-            foreach ($letters as $i => $char) {
-
-                $r = $startColor[0] + ($endColor[0] - $startColor[0]) * ($i / $total);
-                $g = $startColor[1] + ($endColor[1] - $startColor[1]) * ($i / $total);
-                $b = $startColor[2] + ($endColor[2] - $startColor[2]) * ($i / $total);
-
-                $color = imagecolorallocate($banner, $r, $g, $b);
-
-                imagettftext($banner, $nameSize, 0, $x, $y, $color, $fontBold, $char);
-
-                $bbox = imagettfbbox($nameSize, 0, $fontBold, $char);
-                $charWidth = $bbox[2] - $bbox[0];
-
-                $x += $charWidth + 1; // 👈 spacing thoda kam (clean look)
-            }
-
-
-// =======================
-// 🎯 QUALIFICATION (SIZE KAM + PROPER GAP)
-// =======================
-            $qualSize = fitTextSize($qual, $fontRegular, $maxWidth, 40); // 👈 kam kiya
-
-            imagettftext(
-                $banner,
-                $qualSize,
-                0,
-                $startX,
-                1440, // 👈 name ke niche perfect gap
-                $blueColor,
-                $fontRegular,
-                $qual
-            );
-
-
-// =======================
-// 🎯 PHONE (THODA BADA)
-// =======================
-            $phoneText = $phone;
-
-            $phoneSize = fitTextSize($phoneText, $fontBold, $maxWidth, 70); // 👈 bada
-
-            imagettftext(
-                $banner,
-                $phoneSize,
-                0,
-                $startX,
-                1650,
-                $blueColor,
-                $fontBold,
-                $phoneText
-            );
-            // ── Convert Banner to String (IMPORTANT 🔥) ──
-            ob_start();
-            imagepng($banner, null, 0);
-            $bannerData = ob_get_clean();
-
-            // ── Upload Banner to S3 ──
-            Storage::disk('s3')->put(
-                $baseFolder . '/banners/' . $bannerName,
-                $bannerData,
-                'public'
-            );
-
-            // Cleanup
-            imagedestroy($banner);
-            imagedestroy($doctorImage);
-            imagedestroy($resized);
-
-            // Save names (with path)
-            $imageName = $baseFolder . '/photos/' . $imageName;
-            $finalName = $baseFolder . '/banners/' . $bannerName;
+        if ($employeeImage === false) {
+            return back()->withErrors(['cropped_image' => 'Please upload a valid photo.'])->withInput();
         }
-        // ✅ Save DB
+
+        $backgroundPath = public_path('uploads/images/WB_Fathers_day_card_photo_circle_upper.png');
+        $banner = @imagecreatefrompng($backgroundPath);
+
+        if ($banner === false) {
+            imagedestroy($employeeImage);
+            return back()->withErrors(['cropped_image' => 'Card template could not be loaded.'])->withInput();
+        }
+
+        // Photo placement supplied for the Father's Day card.
+        $photoX = 258;
+        $photoY = 370;
+        $photoWidth = 485;
+        $photoHeight = 511;
+
+        $resized = imagecreatetruecolor($photoWidth, $photoHeight);
+        imagealphablending($resized, false);
+        imagesavealpha($resized, true);
+        imagefill($resized, 0, 0, imagecolorallocatealpha($resized, 0, 0, 0, 127));
+        imagecopyresampled(
+            $resized,
+            $employeeImage,
+            0,
+            0,
+            0,
+            0,
+            $photoWidth,
+            $photoHeight,
+            imagesx($employeeImage),
+            imagesy($employeeImage)
+        );
+
+        imagealphablending($banner, true);
+        imagecopy($banner, $resized, $photoX, $photoY, 0, 0, $photoWidth, $photoHeight);
+
+        // Keep the name centered inside the card's name box and shrink long names.
+        $font = public_path('fonts/RobotoCondensed-Bold.ttf');
+        $fontSize = 42;
+        $nameBoxX = 285;
+        $nameBoxY = 908;
+        $nameBoxWidth = 444;
+        $nameBoxHeight = 111;
+        $horizontalPadding = 24;
+        $verticalPadding = 16;
+
+        while ($fontSize > 14) {
+            $textBox = imagettfbbox($fontSize, 0, $font, $data['doctor_name']);
+            $textWidth = $textBox[2] - $textBox[0];
+            $textHeight = $textBox[1] - $textBox[7];
+
+            if (
+                $textWidth <= ($nameBoxWidth - $horizontalPadding * 2)
+                && $textHeight <= ($nameBoxHeight - $verticalPadding * 2)
+            ) {
+                break;
+            }
+            $fontSize--;
+        }
+
+        $textBox = imagettfbbox($fontSize, 0, $font, $data['doctor_name']);
+        $textWidth = $textBox[2] - $textBox[0];
+        $textHeight = $textBox[1] - $textBox[7];
+        $nameX = (int) round($nameBoxX + (($nameBoxWidth - $textWidth) / 2) - $textBox[0]);
+        $nameY = (int) round($nameBoxY + (($nameBoxHeight - $textHeight) / 2) - $textBox[7]);
+
+        $nameColor = imagecolorallocate($banner, 21, 73, 109);
+        imagettftext($banner, $fontSize, 0, $nameX, $nameY, $nameColor, $font, $data['doctor_name']);
+
+        ob_start();
+        imagepng($banner, null, 0);
+        $bannerData = ob_get_clean();
+
+        Storage::disk('s3')->put($baseFolder . '/photos/' . $photoFile, $imageData, 'public');
+        Storage::disk('s3')->put($baseFolder . '/banners/' . $bannerFile, $bannerData, 'public');
+
+        imagedestroy($banner);
+        imagedestroy($employeeImage);
+        imagedestroy($resized);
+
+        $photoPath = $baseFolder . '/photos/' . $photoFile;
+        $bannerPath = $baseFolder . '/banners/' . $bannerFile;
+
         Doctor::create([
-            'employee_name'        => $data['employee_name'],
-            'employee_code'        => $data['employee_code'] ?? null,
-            'employee_hq'          => $data['employee_hq'],
-            'doctor_prefix'        => $data['doctor_prefix'], // 👈 ADD THIS
-            'doctor_name'          => $data['doctor_name'],
-            'doctor_qualification' => $data['doctor_qualification'],
-            'doctor_phone'         => $data['doctor_phone'],
-            'doctor_photo'         => $imageName,
-            'doctor_banner_path'   => $finalName,
+            'employee_code' => $data['employee_code'],
+            'doctor_name' => $data['doctor_name'],
+            'doctor_photo' => $photoPath,
+            'doctor_banner_path' => $bannerPath,
+            'employee_name' => null,
+            'employee_hq' => null,
+            'doctor_prefix' => null,
+            'doctor_qualification' => null,
+            'doctor_phone' => null,
         ]);
 
         return redirect()->route('doctor.index')
-            ->with('success', 'Doctor saved successfully!')
-            ->with('banner_path', $finalName);
+            ->with('success', 'Card generated successfully!')
+            ->with('banner_path', $bannerPath);
     }
+
     public function downloadPdf($file)
     {
         $path = 'Welbourg-sakhi-day/banners/' . $file;
+        $base64 = base64_encode(Storage::disk('s3')->get($path));
+        $html = '<div style="text-align:center;"><img src="data:image/png;base64,' . $base64 . '" style="width:100%;"></div>';
 
-        $image = Storage::disk('s3')->get($path);
-        $base64 = base64_encode($image);
-
-        $html = '
-            <div style="text-align:center;">
-                <img src="data:image/png;base64,' . $base64 . '" style="width:100%;">
-            </div>
-        ';
-
-        $pdf = Pdf::loadHTML($html)->setPaper('a4', 'portrait');
-
-        return $pdf->download(str_replace('.png', '.pdf', $file));
+        return Pdf::loadHTML($html)
+            ->setPaper('a4', 'portrait')
+            ->download(str_replace('.png', '.pdf', $file));
     }
-
 }

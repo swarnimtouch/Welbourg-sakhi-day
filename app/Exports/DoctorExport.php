@@ -18,25 +18,19 @@ class DoctorExport implements FromCollection, WithHeadings
     public function collection()
     {
         return Doctor::when($this->search, function ($q) {
-            $q->where('doctor_name', 'like', '%' . $this->search . '%');
+            $q->where(function ($query) {
+                $query->where('doctor_name', 'like', '%' . $this->search . '%')
+                    ->orWhere('employee_code', 'like', '%' . $this->search . '%');
+            });
         })
             ->get()
             ->map(function ($doctor) {
 
                 return [
-                    'employee_name'        => $doctor->employee_name,
                     'employee_code'        => $doctor->employee_code,
-                    'employee_hq'          => $doctor->employee_hq,
-                    'doctor_name'          => $doctor->doctor_prefix.''.$doctor->doctor_name,
-                    'doctor_qualification' => $doctor->doctor_qualification,
-                    'doctor_phone'         => $doctor->doctor_phone,
-
+                    'name' => $doctor->doctor_name,
                     'photo_url' => $doctor->doctor_photo
                         ? Storage::disk('s3')->url($doctor->doctor_photo)
-                        : '',
-
-                    'banner_url' => $doctor->doctor_banner_path
-                        ? Storage::disk('s3')->url($doctor->doctor_banner_path)
                         : '',
                 ];
             });
@@ -45,14 +39,9 @@ class DoctorExport implements FromCollection, WithHeadings
     public function headings(): array
     {
         return [
-            'Employee Name',
             'Employee Code',
-            'Employee HQ',
-            'Doctor Name',
-            'Qualification',
-            'Phone',
+            'Name',
             'Photo URL',
-            'Banner URL',
         ];
     }
 }

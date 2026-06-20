@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welbourg Sakhi Day</title>
+    <title>Welbourg Father's Day</title>
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
@@ -43,6 +43,14 @@
             min-height: 100vh;
             position: relative;
             padding: 15px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        body > .container {
+            margin-left: auto;
+            margin-right: auto;
         }
 
         /* Top Left Main Logo */
@@ -407,7 +415,7 @@
         <!-- Form Logo & Centered Heading -->
         <div class="form-header">
             <img src="{{ asset('images/form_logo.png') }}" alt="Form Logo">
-            <h2>Doctor Registration</h2>
+            <h2>Employee Registration</h2>
         </div>
 
         {{-- ✅ Success Message — TOP --}}
@@ -429,55 +437,15 @@
             <!-- Grid system ke liye row wrapper -->
             <div class="row">
 
-                <!-- ROW 1: Employee Name & Code -->
+                <!-- Required employee details -->
                 <div class="col-md-6 mb-2 position-relative">
-                    <label>Employee Name <span style="color:var(--error-red)">*</span></label>
-                    <input type="text" class="form-control" id="employee_name" name="employee_name" value="{{ old('employee_name') }}" placeholder="Enter employee name">
-                </div>
-
-                <div class="col-md-6 mb-2 position-relative">
-                    <label>Employee Code</label>
-                    <input type="text" class="form-control" name="employee_code" value="{{ old('employee_code') }}" placeholder="Enter employee code">
-                </div>
-
-                <!-- ROW 2: HQ (Full Width) -->
-                <div class="col-md-12 mb-2 position-relative">
-                    <label>HQ <span style="color:var(--error-red)">*</span></label>
-                    <input type="text" class="form-control" id="employee_hq" name="employee_hq" value="{{ old('employee_hq') }}" placeholder="Enter HQ location">
-                </div>
-
-                <div class="col-12">
-                    <hr class="divider">
-                </div>
-
-                <!-- ROW 3: Prefix & Doctor Name -->
-                <div class="col-md-6 mb-2 position-relative">
-                    <label>Prefix <span style="color:var(--error-red)">*</span></label>
-                    <select name="doctor_prefix" class="form-control">
-                        <option value="">Select Prefix</option>
-                        <option value="Dr." selected>Dr.</option>
-                    </select>
+                    <label>Employee Code <span style="color:var(--error-red)">*</span></label>
+                    <input type="text" class="form-control" id="employee_code" name="employee_code" value="{{ old('employee_code') }}" placeholder="Enter employee code">
                 </div>
 
                 <div class="col-md-6 mb-2 position-relative">
-                    <label>Doctor Name <span style="color:var(--error-red)">*</span></label>
-                    <input type="text" class="form-control" id="doctor_name" name="doctor_name" value="{{ old('doctor_name') }}" placeholder="Enter doctor name">
-                </div>
-
-                <!-- ROW 4: Qualification & Phone -->
-                <div class="col-md-6 mb-2 position-relative">
-                    <label>Qualification <span style="color:var(--error-red)">*</span></label>
-                    <input type="text" class="form-control" id="doctor_qualification" name="doctor_qualification" value="{{ old('doctor_qualification') }}" placeholder="e.g. MBBS, MD">
-                </div>
-
-                <div class="col-md-6 mb-2 position-relative">
-                    <label>Phone <span style="color:var(--error-red)">*</span></label>
-                    <input type="tel" class="form-control" id="doctor_phone" name="doctor_phone"
-                           value="{{ old('doctor_phone') }}"
-                           placeholder="10-digit phone number"
-                           maxlength="10"
-                           inputmode="numeric"
-                           pattern="[0-9]*">
+                    <label>Name <span style="color:var(--error-red)">*</span></label>
+                    <input type="text" class="form-control" id="doctor_name" name="doctor_name" value="{{ old('doctor_name') }}" placeholder="Enter name">
                 </div>
 
                 <div class="col-12">
@@ -486,7 +454,7 @@
 
                 <!-- ROW 5: Photo Upload Section (Full Width) -->
                 <div class="col-12">
-                    <div class="photo-label">Doctor Photo <span style="color:var(--error-red)">*</span></div>
+                    <div class="photo-label">Photo Upload <span style="color:var(--error-red)">*</span></div>
 
                     <!-- UPLOAD STATE -->
                     <div class="upload-area" id="uploadArea">
@@ -711,25 +679,14 @@
                 }
             },
             rules: {
-                employee_name: { required: true },
-                employee_hq: { required: true },
+                employee_code: { required: true },
                 doctor_name: { required: true },
-                doctor_qualification: { required: true },
-                doctor_phone: {
-                    required: true,
-                    digits: true,
-                    minlength: 10,
-                    maxlength: 10
-                },
                 cropped_image: { required: true } /* 🔴 NAYA ADD: Photo field ab mandatory hai */
             },
             messages: {
-                employee_name: "Employee name is required.",
-                employee_hq: "HQ is required.",
-                doctor_name: "Doctor name is required.",
-                doctor_qualification: "Qualification is required.",
-                doctor_phone: "Enter a valid 10-digit phone number.",
-                cropped_image: "Doctor Photo is required." /* 🔴 NAYA ADD */
+                employee_code: "Employee code is required.",
+                doctor_name: "Name is required.",
+                cropped_image: "Photo is required." /* 🔴 NAYA ADD */
             },
             submitHandler: function(form) {
                 // 🔴 NAYA: Ab manual if-else check ki zarurat nahi hai kyuki validation plugin khud red border aur error handle kar raha hai
@@ -774,32 +731,6 @@
         // ─────────────────────────────
         // 📱 PHONE VALIDATION (Key Filters)
         // ─────────────────────────────
-        $('#doctor_phone').on('keydown', function (e) {
-            var allowed = ['Backspace','Delete','ArrowLeft','ArrowRight','Tab','Home','End'];
-            var isDigit = (e.key >= '0' && e.key <= '9') || (e.keyCode >= 96 && e.keyCode <= 105);
-
-            if (!isDigit && allowed.indexOf(e.key) === -1) {
-                e.preventDefault();
-                return;
-            }
-
-            if (this.value.replace(/[^0-9]/g, '').length >= 10 && isDigit) {
-                e.preventDefault();
-            }
-        });
-
-        $('#doctor_phone').on('paste', function (e) {
-            e.preventDefault();
-            var pasted = (e.originalEvent.clipboardData || window.clipboardData).getData('text');
-            var digits = pasted.replace(/[^0-9]/g, '').slice(0, 10);
-            this.value = digits;
-            $(this).valid();
-        });
-
-        $('#doctor_phone').on('input', function () {
-            this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);
-        });
-
     });
 </script>
 

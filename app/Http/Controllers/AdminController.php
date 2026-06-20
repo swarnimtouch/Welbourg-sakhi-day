@@ -70,11 +70,7 @@ class AdminController extends Controller
             $q->where(function ($query) use ($request) {
 
                 $query->where('doctor_name', 'like', '%' . $request->search . '%')
-                    ->orWhere('doctor_qualification', 'like', '%' . $request->search . '%')
-                    ->orWhere('doctor_phone', 'like', '%' . $request->search . '%')
-                    ->orWhere('employee_name', 'like', '%' . $request->search . '%')
-                    ->orWhere('employee_code', 'like', '%' . $request->search . '%')
-                    ->orWhere('employee_hq', 'like', '%' . $request->search . '%');
+                    ->orWhere('employee_code', 'like', '%' . $request->search . '%');
 
             });
 
