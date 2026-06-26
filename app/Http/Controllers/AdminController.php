@@ -5,15 +5,9 @@ namespace App\Http\Controllers;
 use App\Exports\DoctorExport;
 use App\Models\Doctor;
 use Illuminate\Http\Request;
-use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use Aws\S3\S3Client;
-use ZipStream\ZipStream;
-use ZipStream\OperationMode;
-use ZipArchive;
-
-
+use Maatwebsite\Excel\Facades\Excel;
 
 class AdminController extends Controller
 {
@@ -57,30 +51,23 @@ class AdminController extends Controller
 
     public function dashboard()
     {
-        $totalDoctor  = Doctor::count();
+        $totalDoctor = Doctor::count();
 
         return view('admin.dashboard', compact('totalDoctor'));
     }
 
-
     public function doctor(Request $request)
     {
         $doctors = Doctor::when($request->search, function ($q) use ($request) {
-
             $q->where(function ($query) use ($request) {
-
                 $query->where('doctor_name', 'like', '%' . $request->search . '%')
                     ->orWhere('employee_code', 'like', '%' . $request->search . '%');
-
             });
-
         })
             ->latest()
             ->paginate(10);
 
-        // ✅ Add S3 URLs
         $doctors->getCollection()->transform(function ($doctor) {
-
             $doctor->photo_url = $doctor->doctor_photo
                 ? Storage::disk('s3')->url($doctor->doctor_photo)
                 : null;
@@ -119,6 +106,7 @@ class AdminController extends Controller
             'Doctor.xlsx'
         );
     }
+
     public function downloadBanner($id)
     {
         $doctor = Doctor::findOrFail($id);
@@ -129,13 +117,12 @@ class AdminController extends Controller
 
         $path = $doctor->doctor_banner_path;
 
-        // Check file exists on S3
         if (!Storage::disk('s3')->exists($path)) {
             abort(404, 'File not found on storage.');
         }
 
-        $fileName  = 'banner_' . ($doctor->doctor_name ? \Str::slug($doctor->doctor_name) : $id) . '.' . pathinfo($path, PATHINFO_EXTENSION);
-        $mimeType  = Storage::disk('s3')->mimeType($path);
+        $fileName = 'banner_' . ($doctor->doctor_name ? \Str::slug($doctor->doctor_name) : $id) . '.' . pathinfo($path, PATHINFO_EXTENSION);
+        $mimeType = Storage::disk('s3')->mimeType($path);
 
         return response()->streamDownload(function () use ($path) {
             echo Storage::disk('s3')->get($path);
@@ -144,59 +131,78 @@ class AdminController extends Controller
             'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
         ]);
     }
+
     public function downloadAllZip()
     {
         ini_set('memory_limit', '512M');
-        set_time_limit(0); // unlimited time
+        set_time_limit(0);
 
-        $baseFolder = 'Welbourg-sakhi-day/banners/';
-
-        // ✅ DB se paths lo (S3 list call slow hoti hai)
-        $doctors = Doctor::whereNotNull('doctor_banner_path')->pluck('doctor_banner_path');
+        $doctors = Doctor::whereNotNull('doctor_banner_path')
+            ->where('doctor_banner_path', '!=', '')
+            ->select('id', 'employee_code', 'doctor_name', 'doctor_banner_path')
+            ->get();
 
         if ($doctors->isEmpty()) {
             return back()->with('error', 'Koi banner nahi mila.');
         }
 
         $zipFileName = 'all_banners_' . time() . '.zip';
-        $zipPath = storage_path('app/' . $zipFileName);
+        $zipDir = storage_path('app/zips');
+
+        if (!is_dir($zipDir) && !mkdir($zipDir, 0775, true) && !is_dir($zipDir)) {
+            return back()->with('error', 'Zip folder create nahi ho pa raha hai.');
+        }
+
+        $zipPath = $zipDir . DIRECTORY_SEPARATOR . $zipFileName;
 
         $zip = new \ZipArchive();
-        $zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+            return back()->with('error', 'Zip file create nahi ho pa rahi hai.');
+        }
 
-        foreach ($doctors as $filePath) {
+        $addedCount = 0;
+
+        foreach ($doctors as $index => $doctor) {
             try {
-                // ✅ S3 presigned URL se directly download (fast)
-                $url = Storage::disk('s3')->temporaryUrl($filePath, now()->addMinutes(10));
+                $filePath = $doctor->doctor_banner_path;
 
-                $tempPath = tempnam(sys_get_temp_dir(), 'bnr_');
+                if (!Storage::disk('s3')->exists($filePath)) {
+                    continue;
+                }
 
-                // ✅ cURL se fast download
-                $ch = curl_init($url);
-                $fp = fopen($tempPath, 'wb');
-                curl_setopt($ch, CURLOPT_FILE, $fp);
-                curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-                curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-                curl_exec($ch);
-                curl_close($ch);
-                fclose($fp);
+                $fileContents = Storage::disk('s3')->get($filePath);
 
-                $zip->addFile($tempPath, basename($filePath));
+                if ($fileContents === false || $fileContents === '') {
+                    continue;
+                }
 
+                $extension = pathinfo($filePath, PATHINFO_EXTENSION) ?: 'png';
+                $namePart = $doctor->employee_code ?: $doctor->doctor_name ?: 'banner';
+                $entryName = str_pad((string) ($index + 1), 3, '0', STR_PAD_LEFT)
+                    . '_' . \Str::slug($namePart)
+                    . '_' . $doctor->id
+                    . '.' . $extension;
+
+                $zip->addFromString($entryName, $fileContents);
+                $addedCount++;
             } catch (\Exception $e) {
-                continue; // ek fail ho toh skip karo, baaki chalta rahe
+                continue;
             }
         }
 
-        $zip->close();
+        if ($addedCount === 0) {
+            $zip->close();
+            @unlink($zipPath);
 
-        // ✅ Temp files delete karo
-        foreach (glob(sys_get_temp_dir() . '/bnr_*') as $tmp) {
-            @unlink($tmp);
+            return back()->with('error', 'DB me path hai, lekin storage par banner file nahi mili.');
+        }
+
+        if (!$zip->close()) {
+            @unlink($zipPath);
+
+            return back()->with('error', 'Zip complete nahi ho pa rahi hai.');
         }
 
         return response()->download($zipPath, $zipFileName)->deleteFileAfterSend(true);
     }
-
-
 }
