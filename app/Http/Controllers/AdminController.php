@@ -8,6 +8,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
+use ZipStream\CompressionMethod;
+use ZipStream\OperationMode;
+use ZipStream\ZipStream;
 
 class AdminController extends Controller
 {
@@ -147,62 +150,40 @@ class AdminController extends Controller
         }
 
         $zipFileName = 'all_banners_' . time() . '.zip';
-        $zipDir = storage_path('app/zips');
 
-        if (!is_dir($zipDir) && !mkdir($zipDir, 0775, true) && !is_dir($zipDir)) {
-            return back()->with('error', 'Zip folder create nahi ho pa raha hai.');
-        }
+        return response()->streamDownload(function () use ($doctors) {
+            $zip = new ZipStream(
+                operationMode: OperationMode::NORMAL,
+                outputStream: fopen('php://output', 'wb'),
+                defaultCompressionMethod: CompressionMethod::STORE,
+                sendHttpHeaders: false,
+            );
 
-        $zipPath = $zipDir . DIRECTORY_SEPARATOR . $zipFileName;
+            foreach ($doctors as $index => $doctor) {
+                try {
+                    $filePath = $doctor->doctor_banner_path;
+                    $stream = Storage::disk('s3')->readStream($filePath);
 
-        $zip = new \ZipArchive();
-        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
-            return back()->with('error', 'Zip file create nahi ho pa rahi hai.');
-        }
+                    if (!$stream) {
+                        continue;
+                    }
 
-        $addedCount = 0;
+                    $extension = pathinfo($filePath, PATHINFO_EXTENSION) ?: 'png';
+                    $namePart = $doctor->employee_code ?: $doctor->doctor_name ?: 'banner';
+                    $entryName = str_pad((string) ($index + 1), 3, '0', STR_PAD_LEFT)
+                        . '_' . \Str::slug($namePart)
+                        . '_' . $doctor->id
+                        . '.' . $extension;
 
-        foreach ($doctors as $index => $doctor) {
-            try {
-                $filePath = $doctor->doctor_banner_path;
-
-                if (!Storage::disk('s3')->exists($filePath)) {
+                    $zip->addFileFromStream($entryName, $stream);
+                } catch (\Exception $e) {
                     continue;
                 }
-
-                $fileContents = Storage::disk('s3')->get($filePath);
-
-                if ($fileContents === false || $fileContents === '') {
-                    continue;
-                }
-
-                $extension = pathinfo($filePath, PATHINFO_EXTENSION) ?: 'png';
-                $namePart = $doctor->employee_code ?: $doctor->doctor_name ?: 'banner';
-                $entryName = str_pad((string) ($index + 1), 3, '0', STR_PAD_LEFT)
-                    . '_' . \Str::slug($namePart)
-                    . '_' . $doctor->id
-                    . '.' . $extension;
-
-                $zip->addFromString($entryName, $fileContents);
-                $addedCount++;
-            } catch (\Exception $e) {
-                continue;
             }
-        }
 
-        if ($addedCount === 0) {
-            $zip->close();
-            @unlink($zipPath);
-
-            return back()->with('error', 'DB me path hai, lekin storage par banner file nahi mili.');
-        }
-
-        if (!$zip->close()) {
-            @unlink($zipPath);
-
-            return back()->with('error', 'Zip complete nahi ho pa rahi hai.');
-        }
-
-        return response()->download($zipPath, $zipFileName)->deleteFileAfterSend(true);
+            $zip->finish();
+        }, $zipFileName, [
+            'Content-Type' => 'application/zip',
+        ]);
     }
 }
